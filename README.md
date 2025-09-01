@@ -1,4 +1,4 @@
-# Cloud IDE — Demo (Monaco frontend + Docker executor)
+# Cloud IDE — (Monaco frontend + Docker executor)
 
 ## Prerequisites
 - Docker installed and working (ability to `docker run hello-world`).
