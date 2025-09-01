@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cloud-based Online IDE — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#f6f8fa;--muted:#7b8794;--accent:#2563eb;--editor-bg:#0b1320}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;margin:0;color:#0f1724;background:linear-gradient(180deg,#fbfdff 0%,var(--bg)100%)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:22px 24px;background:#fff;border-bottom:1px solid #eef2f6}
+    .brand{font-weight:800}
+    .hero{max-width:1100px;margin:18px auto;padding:24px;text-align:center}
+    .big{font-size:48px;font-weight:800;margin:6px 0}
+    .sub{color:var(--muted)}
+    .editor-panel{display:flex;gap:16px;max-width:1100px;margin:18px auto}
+    .left{width:240px}
+    .file-tree{background:#fff;padding:12px;border-radius:8px;box-shadow:0 8px 20px rgba(15,23,36,0.04)}
+    .file{padding:8px;border-radius:6px;cursor:pointer}
+    .file:hover{background:#f1f5f9}
+    .active{background:#eef2ff}
+    .controls{margin-top:10px;display:flex;gap:8px}
+    .select,.btn{padding:8px 10px;border-radius:8px;border:none;font-weight:600}
+    .select{background:#111827;color:#fff}
+    .btn{background:var(--accent);color:#fff}
+    .editor-card{flex:1;background:var(--editor-bg);border-radius:12px;padding:12px;color:#cbd5e1}
+    #editor{height:420px;border-radius:8px;overflow:hidden}
+    .bottom{display:flex;gap:12px;align-items:flex-start;margin-top:10px}
+    .output{flex:1;background:#071621;color:#9ae6b4;padding:12px;border-radius:6px;min-height:120px;font-family:monospace;white-space:pre-wrap}
+    .side-controls{width:240px}
+    .panel{background:#fff;padding:12px;border-radius:8px;box-shadow:0 8px 20px rgba(15,23,36,0.04)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #e6eef6}
+    footer{padding:18px;text-align:center;color:var(--muted);margin-top:22px}
+    @media (max-width:980px){ .editor-panel{flex-direction:column;padding:12px} .left,.side-controls{width:100%} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">TAG</div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <a href="#" style="color:var(--muted);text-decoration:none">Sign In</a>
+      <a href="#" class="btn" style="background:var(--accent)">Get Started</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1 class="big">Cloud-based Online IDE</h1>
+      <p class="sub">Log in and access a personal, containerized coding environment.</p>
+    </section>
+
+    <div class="editor-panel">
+      <div class="left">
+        <div class="file-tree panel" id="fileTreePanel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Files</strong>
+            <button id="newFileBtn" class="btn" style="padding:6px 8px">New</button>
+          </div>
+          <div id="fileList" style="max-height:360px;overflow:auto"></div>
+        </div>
+      </div>
+
+      <div class="editor-card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div class="traffic"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff5f56"></span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ffbd2e;margin-left:6px"></span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#27c93f;margin-left:6px"></span></div>
+          <div id="currentFilename" style="color:#94a3b8;margin-left:8px">main.py</div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <select id="lang" class="select">
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+            </select>
+            <button id="runBtn" class="btn">Run</button>
+            <button id="saveBtn" class="btn" style="background:#10b981">Save</button>
+          </div>
+        </div>
+
+        <div id="editor"></div>
+
+        <div class="bottom">
+          <div style="flex:2">
+            <div style="margin-bottom:8px"><label class="small">StdIn (input to program):</label><textarea id="stdinBox" rows="4" placeholder="Optional program input..."></textarea></div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <label class="small" style="margin:0">Time limit (s):</label>
+              <input id="timeLimit" type="number" value="5" min="1" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6eef6"/>
+              <label class="small" style="margin:0">Memory (MB):</label>
+              <input id="memory" type="number" value="512" min="64" style="width:90px;padding:6px;border-radius:6px;border:1px solid #e6eef6"/>
+              <label class="small" style="margin:0">CPUs:</label>
+              <input id="cpus" type="number" value="0.5" min="0.1" step="0.1" style="width:60px;padding:6px;border-radius:6px;border:1px solid #e6eef6"/>
+            </div>
+            <div class="output" id="output">Ready — open or create a workspace to start coding.</div>
+          </div>
+
+          <div class="side-controls">
+            <div class="panel" style="margin-bottom:12px">
+              <label class="small">Workspace</label>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <button id="createWs" class="btn">New WS</button>
+                <button id="loadWs" class="btn" style="background:#64748b">Load</button>
+              </div>
+              <div class="small">Current workspace: <span id="wsId">—</span></div>
+            </div>
+            <div class="panel">
+              <label class="small">File actions</label>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="renameBtn" class="btn" style="background:#f59e0b">Rename</button>
+                <button id="deleteBtn" class="btn" style="background:#ef4444">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <footer>
+      <div style="font-weight:700">TAG</div>
+      <div style="margin-top:8px">© 2024 TAG. All rights reserved.</div>
+    </footer>
+  </main>
+
+  <!-- Monaco loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.js"></script>
+  <script>
+    let editor;
+    let currentFile = null;
+    let workspaceId = null;
+    const templates = {
+      python: `def greet(name):\n    print(f"Hello, {name}!")\n\nif __name__ == '__main__':\n    greet('World')\n`,
+      java: `public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}\n`,
+      cpp: `#include <bits/stdc++.h>\nusing namespace std;\nint main(){ cout<<"Hello, World!\\n"; return 0; }\n`
+    };
+
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+      editor = monaco.editor.create(document.getElementById('editor'), {
+        value: templates.python,
+        language: 'python',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: false }
+      });
+    });
+
+    function setCurrentFile(name, content) {
+      currentFile = name;
+      document.getElementById('currentFilename').textContent = name;
+      const lang = name.endsWith('.py') ? 'python' : (name.endsWith('.java') ? 'java' : (name.endsWith('.cpp') ? 'cpp' : 'python'));
+      monaco.editor.setModelLanguage(editor.getModel(), lang === 'cpp' ? 'cpp' : (lang === 'java' ? 'java' : 'python'));
+      document.getElementById('lang').value = lang;
+      editor.setValue(content || templates[lang] || '');
+    }
+
+    // workspace create / list / file ops
+    async function createWorkspace(){
+      const r = await fetch('/workspace/create', { method:'POST' });
+      const j = await r.json();
+      workspaceId = j.workspaceId;
+      document.getElementById('wsId').textContent = workspaceId;
+      await refreshFileList();
+      // open default file
+      setCurrentFile('main.py', templates.python);
+    }
+    document.getElementById('createWs').addEventListener('click', createWorkspace);
+
+    async function refreshFileList(){
+      const listEl = document.getElementById('fileList');
+      listEl.innerHTML = '';
+      if (!workspaceId) { listEl.innerHTML = '<div class="small">No workspace loaded</div>'; return; }
+      const r = await fetch(`/workspace/${workspaceId}/files`);
+      const j = await r.json();
+      const files = j.files || [];
+      for (const f of files) {
+        const d = document.createElement('div');
+        d.className = 'file';
+        d.textContent = f;
+        d.addEventListener('click', async ()=> {
+          const r2 = await fetch(`/workspace/${workspaceId}/file_content?name=${encodeURIComponent(f)}`);
+          const j2 = await r2.json();
+          setCurrentFile(f, j2.content);
+        });
+        listEl.appendChild(d);
+      }
+    }
+
+    document.getElementById('loadWs').addEventListener('click', async ()=>{
+      const id = prompt('Enter workspace id:');
+      if (!id) return;
+      workspaceId = id;
+      document.getElementById('wsId').textContent = workspaceId;
+      await refreshFileList();
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', async ()=>{
+      if (!workspaceId) { alert('Create workspace first'); return; }
+      if (!currentFile) {
+        const name = prompt('Filename?');
+        if (!name) return;
+        currentFile = name;
+      }
+      const content = editor.getValue();
+      await fetch(`/workspace/${workspaceId}/file`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename: currentFile, content }) });
+      await refreshFileList();
+      alert('Saved');
+    });
+
+    document.getElementById('newFileBtn').addEventListener('click', async ()=>{
+      const name = prompt('New filename (e.g., util.py, Main.java, main.cpp)');
+      if (!name) return;
+      setCurrentFile(name, '');
+      if (workspaceId) {
+        await fetch(`/workspace/${workspaceId}/file`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename: name, content: '' }) });
+        await refreshFileList();
+      }
+    });
+
+    document.getElementById('deleteBtn').addEventListener('click', async ()=>{
+      if (!workspaceId) { alert('No workspace'); return; }
+      if (!currentFile) { alert('No file selected'); return; }
+      if (!confirm('Delete ' + currentFile + '?')) return;
+      await fetch(`/workspace/${workspaceId}/file`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename: currentFile }) });
+      currentFile = null;
+      editor.setValue('');
+      await refreshFileList();
+    });
+
+    document.getElementById('renameBtn').addEventListener('click', async ()=>{
+      if (!workspaceId || !currentFile) { alert('No workspace/file'); return; }
+      const newName = prompt('New filename', currentFile);
+      if (!newName) return;
+      // save new file with editor contents then delete old file
+      const content = editor.getValue();
+      await fetch(`/workspace/${workspaceId}/file`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename: newName, content }) });
+      await fetch(`/workspace/${workspaceId}/file`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename: currentFile }) });
+      currentFile = newName;
+      await refreshFileList();
+    });
+
+    // Run
+    document.getElementById('runBtn').addEventListener('click', async ()=>{
+      const lang = document.getElementById('lang').value;
+      const stdin = document.getElementById('stdinBox').value;
+      const timeLimit = Number(document.getElementById('timeLimit').value) || 5;
+      const memory = Number(document.getElementById('memory').value) || 512;
+      const cpus = Number(document.getElementById('cpus').value) || 0.5;
+
+      // Build files payload: include current editor file and any saved workspace files
+      const payload = { workspaceId: workspaceId || null, files: [{ name: currentFile || (lang==='java'?'Main.java':(lang==='cpp'?'main.cpp':'main.py')), content: editor.getValue() }], language: lang === 'cpp' ? 'cpp' : (lang === 'java' ? 'java' : 'python'), stdin, timeLimit, memory, cpus };
+
+      document.getElementById('output').textContent = 'Running...';
+      try {
+        const r = await fetch('/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const j = await r.json();
+        let out = '';
+        if (j.error) out += 'Error: ' + j.error + '\n';
+        if (j.stderr) out += j.stderr + '\n';
+        if (j.stdout) out += j.stdout;
+        if (!out) out = '(no output)';
+        document.getElementById('output').textContent = out;
+        document.getElementById('output').style.color = (j.error || j.stderr) ? '#ffb4b4' : '#9ae6b4';
+      } catch (err) {
+        document.getElementById('output').textContent = 'Network error: ' + err.message;
+        document.getElementById('output').style.color = '#ffb4b4';
+      }
+    });
+
+    // Auto-create workspace on load for convenience
+    (async ()=> {
+      try { await createWorkspace(); } catch(e){ console.error(e); }
+      await refreshFileList();
+    })();
+  </script>
+</body>
+</html>
